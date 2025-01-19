@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using AsylumLauncher.Data.Display;
+using NLog;
 
 namespace AsylumLauncher
 {
@@ -293,19 +294,19 @@ namespace AsylumLauncher
         private void InitColors()
         {
             // Saturation
-            Program.MainWindow.SaturationTrackbar.Value = Program.IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_DesaturationMultiplier"]);
+            Program.MainWindow.SaturationTrackbar.Value = IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_DesaturationMultiplier"]);
             Program.MainWindow.SaturationValueLabel.Text = Program.MainWindow.SaturationTrackbar.Value.ToString() + "%";
 
             // Highlights
-            Program.MainWindow.HighlightsTrackbar.Value = Program.IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_HighlightsMultiplier"]);
+            Program.MainWindow.HighlightsTrackbar.Value = IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_HighlightsMultiplier"]);
             Program.MainWindow.HighlightsValueLabel.Text = Program.MainWindow.HighlightsTrackbar.Value.ToString() + "%";
 
             // Midtones
-            Program.MainWindow.MidtonesTrackbar.Value = Program.IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_MidTonesMultiplier"]);
+            Program.MainWindow.MidtonesTrackbar.Value = IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_MidTonesMultiplier"]);
             Program.MainWindow.MidtonesValueLabel.Text = Program.MainWindow.MidtonesTrackbar.Value.ToString() + "%";
 
             // Shadows
-            Program.MainWindow.ShadowsTrackbar.Value = Program.IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_ShadowsMultiplier"]);
+            Program.MainWindow.ShadowsTrackbar.Value = IniHandler.ColorIniToLauncher(IniHandler.BmEngineData["Engine.Player"]["PP_ShadowsMultiplier"]);
             Program.MainWindow.ShadowsValueLabel.Text = Program.MainWindow.ShadowsTrackbar.Value.ToString() + "%";
         }
 
@@ -317,7 +318,7 @@ namespace AsylumLauncher
                 {
                     Program.IniHandler.TexPackEnabled[i] = true;
                 }
-                if (!Program.IniHandler.CustomLines[i].Equals(Program.IniHandler.ReturnTexGroupValue(Program.IniHandler.TexturePackDefaults[i])))
+                if (!Program.IniHandler.CustomLines[i].Equals(IniHandler.ReturnTexGroupValue(Program.IniHandler.TexturePackDefaults[i])))
                 {
                     Program.IniHandler.TexPackDisabled[i] = false;
                 }
@@ -362,32 +363,32 @@ namespace AsylumLauncher
 
         public void InitCustomLines()
         {
-            Program.IniHandler.CustomLines[0] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_World"]);
-            Program.IniHandler.CustomLines[1] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldNormalMap"]);
-            Program.IniHandler.CustomLines[2] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldSpecular"]);
-            Program.IniHandler.CustomLines[3] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Character"]);
-            Program.IniHandler.CustomLines[4] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_CharacterNormalMap"]);
-            Program.IniHandler.CustomLines[5] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_CharacterSpecular"]);
-            Program.IniHandler.CustomLines[6] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon"]);
-            Program.IniHandler.CustomLines[7] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WeaponNormalMap"]);
-            Program.IniHandler.CustomLines[8] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WeaponSpecular"]);
-            Program.IniHandler.CustomLines[9] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Vehicle"]);
-            Program.IniHandler.CustomLines[10] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_VehicleNormalMap"]);
-            Program.IniHandler.CustomLines[11] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_VehicleSpecular"]);
-            Program.IniHandler.CustomLines[12] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Cinematic"]);
-            Program.IniHandler.CustomLines[13] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Effects"]);
-            Program.IniHandler.CustomLines[14] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_EffectsNotFiltered"]);
-            Program.IniHandler.CustomLines[15] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Skybox"]);
-            Program.IniHandler.CustomLines[16] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_UI"]);
-            Program.IniHandler.CustomLines[17] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_LightAndShadowMap"]);
-            Program.IniHandler.CustomLines[18] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_RenderTarget"]);
-            Program.IniHandler.CustomLines[19] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon3P"]);
-            Program.IniHandler.CustomLines[20] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon3PNormalMap"]);
-            Program.IniHandler.CustomLines[21] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon3PSpecular"]);
-            Program.IniHandler.CustomLines[22] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_World_Hi"]);
-            Program.IniHandler.CustomLines[23] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldNormalMap_Hi"]);
-            Program.IniHandler.CustomLines[24] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldSpecular_Hi"]);
-            Program.IniHandler.CustomLines[25] = Program.IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Effects_Hi"]);
+            Program.IniHandler.CustomLines[0] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_World"]);
+            Program.IniHandler.CustomLines[1] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldNormalMap"]);
+            Program.IniHandler.CustomLines[2] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldSpecular"]);
+            Program.IniHandler.CustomLines[3] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Character"]);
+            Program.IniHandler.CustomLines[4] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_CharacterNormalMap"]);
+            Program.IniHandler.CustomLines[5] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_CharacterSpecular"]);
+            Program.IniHandler.CustomLines[6] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon"]);
+            Program.IniHandler.CustomLines[7] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WeaponNormalMap"]);
+            Program.IniHandler.CustomLines[8] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WeaponSpecular"]);
+            Program.IniHandler.CustomLines[9] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Vehicle"]);
+            Program.IniHandler.CustomLines[10] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_VehicleNormalMap"]);
+            Program.IniHandler.CustomLines[11] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_VehicleSpecular"]);
+            Program.IniHandler.CustomLines[12] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Cinematic"]);
+            Program.IniHandler.CustomLines[13] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Effects"]);
+            Program.IniHandler.CustomLines[14] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_EffectsNotFiltered"]);
+            Program.IniHandler.CustomLines[15] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Skybox"]);
+            Program.IniHandler.CustomLines[16] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_UI"]);
+            Program.IniHandler.CustomLines[17] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_LightAndShadowMap"]);
+            Program.IniHandler.CustomLines[18] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_RenderTarget"]);
+            Program.IniHandler.CustomLines[19] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon3P"]);
+            Program.IniHandler.CustomLines[20] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon3PNormalMap"]);
+            Program.IniHandler.CustomLines[21] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Weapon3PSpecular"]);
+            Program.IniHandler.CustomLines[22] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_World_Hi"]);
+            Program.IniHandler.CustomLines[23] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldNormalMap_Hi"]);
+            Program.IniHandler.CustomLines[24] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_WorldSpecular_Hi"]);
+            Program.IniHandler.CustomLines[25] = IniHandler.ReturnTexGroupValue(IniHandler.BmEngineData["SystemSettings"]["TEXTUREGROUP_Effects_Hi"]);
         }
     }
 }

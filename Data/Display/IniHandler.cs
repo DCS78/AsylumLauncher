@@ -1,17 +1,18 @@
-﻿using AsylumLauncher.Properties;
+﻿using AsylumLauncher.Data.Controls;
+using AsylumLauncher.Properties;
 using IniParser;
 using IniParser.Model;
 using NLog;
 using System.Globalization;
 
-namespace AsylumLauncher
+namespace AsylumLauncher.Data.Display
 {
     internal class IniHandler
     {
         public static IniData? BmEngineData { get; set; }
         public static IniData? BmInputData { get; set; }
 
-        private static Logger Nlog = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Nlog = LogManager.GetCurrentClassLogger();
 
         public string[] TexturePackDefaults = { "(MinLODSize=256,MaxLODSize=1024,LODBias=0)",
                                                 "(MinLODSize=256,MaxLODSize=1024,LODBias=0)",
@@ -115,18 +116,18 @@ namespace AsylumLauncher
             Nlog.Info("Constructor - Successfully initialized IniHandler.");
         }
 
-        private void InitBmInputValues(string[] BmInputLines)
+        private static void InitBmInputValues(string[] BmInputLines)
         {
             for (int i = 0; i < 254; i++)
             {
-                if (BmInputLines[i].Contains("MouseSensitivity=")) 
+                if (BmInputLines[i].Contains("MouseSensitivity="))
                 {
-                    BmInputData["Engine.PlayerInput"]["MouseSensitivity"] = BmInputLines[i].Substring(BmInputLines[i].IndexOf("=") + 1);
+                    BmInputData["Engine.PlayerInput"]["MouseSensitivity"] = BmInputLines[i][(BmInputLines[i].IndexOf("=") + 1)..];
                 }
 
                 if (BmInputLines[i].Contains("bEnableMouseSmoothing="))
                 {
-                    BmInputData["Engine.PlayerInput"]["bEnableMouseSmoothing"] = BmInputLines[i].Substring(BmInputLines[i].IndexOf("=") + 1);
+                    BmInputData["Engine.PlayerInput"]["bEnableMouseSmoothing"] = BmInputLines[i][(BmInputLines[i].IndexOf("=") + 1)..];
                 }
             }
         }
@@ -139,7 +140,7 @@ namespace AsylumLauncher
             }
         }
 
-        private IniData SetIniData(string Path)
+        private static IniData SetIniData(string Path)
         {
             var IniConfigurator = new FileIniDataParser();
             IniConfigurator.Parser.Configuration.AllowDuplicateKeys = true;
@@ -221,23 +222,23 @@ namespace AsylumLauncher
             BmEngineData.Sections.RemoveSection("AppCompat");
         }
 
-        public int ColorIniToLauncher(string input)
+        public static int ColorIniToLauncher(string input)
         {
             double inp = double.Parse(input, CultureInfo.InvariantCulture);
-            return (int)((inp / 0.04) - 125) * (-1);
+            return (int)(inp / 0.04 - 125) * -1;
         }
 
-        public string ColorLauncherToIni(int input)
+        public static string ColorLauncherToIni(int input)
         {
             string Affix = "";
-            if ((double)(125 - input) * 0.04 % 1 == 0)
+            if ((125 - input) * 0.04 % 1 == 0)
             {
                 Affix = ".00";
             }
-            return ((double)(125 - input) * 0.04).ToString() + Affix;
+            return ((125 - input) * 0.04).ToString() + Affix;
         }
 
-        public void ResetDisplay()
+        public static void ResetDisplay()
         {
             Program.FileHandler.BmEngine.IsReadOnly = false;
             File.Delete(Program.FileHandler.BmEnginePath);
@@ -250,11 +251,11 @@ namespace AsylumLauncher
             Nlog.Info("ResetDisplay - Successfully reset display settings.");
         }
 
-        public string ReturnTexGroupValue(string TexGroupString)
+        public static string ReturnTexGroupValue(string TexGroupString)
         {
-            TexGroupString = TexGroupString.Substring(TexGroupString.IndexOf(",") + 1);
-            TexGroupString = TexGroupString.Substring(0, TexGroupString.IndexOf(","));
-            TexGroupString = TexGroupString.Substring(TexGroupString.IndexOf("=") + 1);
+            TexGroupString = TexGroupString[(TexGroupString.IndexOf(",") + 1)..];
+            TexGroupString = TexGroupString[..TexGroupString.IndexOf(",")];
+            TexGroupString = TexGroupString[(TexGroupString.IndexOf("=") + 1)..];
             return TexGroupString;
         }
     }

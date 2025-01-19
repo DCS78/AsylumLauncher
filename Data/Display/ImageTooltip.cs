@@ -1,12 +1,16 @@
-﻿namespace AsylumLauncher
+﻿using System.Collections.Concurrent;
+
+namespace AsylumLauncher.Data.Display
 {
     internal class ImageTooltip : ToolTip
     {
+        private static readonly ConcurrentDictionary<Control, Image> ImageCache = new();
+
         public ImageTooltip()
         {
-            this.OwnerDraw = true;
-            this.Popup += new PopupEventHandler(this.OnPopup);
-            this.Draw += new DrawToolTipEventHandler(this.OnDraw);
+            OwnerDraw = true;
+            Popup += new PopupEventHandler(OnPopup);
+            Draw += new DrawToolTipEventHandler(OnDraw);
         }
 
         private void OnPopup(object sender, PopupEventArgs e)
@@ -16,49 +20,43 @@
 
         private void OnDraw(object sender, DrawToolTipEventArgs e)
         {
-            Graphics g = e.Graphics;
-
-            SolidBrush b = new(Color.LightGray);
+            using Graphics g = e.Graphics;
+            using SolidBrush b = new(Color.LightGray);
             g.FillRectangle(b, e.Bounds);
 
-            var img = SelectImage(e);
-            var scaledimg = ScaleImage(img, 512, 512);
-            img.Dispose();
-            g.DrawImage(scaledimg, 0, 0);
-            scaledimg.Dispose();
-            b.Dispose();
+            if (e.AssociatedControl != null)
+            {
+                var img = GetCachedImage(e.AssociatedControl);
+                g.DrawImage(img, 0, 0);
+            }
         }
 
-
-        private Image SelectImage(DrawToolTipEventArgs e)
+        private static Image GetCachedImage(Control control)
         {
-            if (e.AssociatedControl == Program.MainWindow.DefaultColorButton)
+            return ImageCache.GetOrAdd(control, ctrl =>
             {
-                return (Image)Properties.Resources.Default_2;
-            }
-            if (e.AssociatedControl == Program.MainWindow.NoirColorButton)
-            {
-                return (Image)Properties.Resources.Monochrome_2;
-            }
-            if (e.AssociatedControl == Program.MainWindow.MutedColorButton)
-            {
-                return (Image)Properties.Resources.Muted_2;
-            }
-            if (e.AssociatedControl == Program.MainWindow.LowContrastColorButton)
-            {
-                return (Image)Properties.Resources.Log_1_2;
-            }
-            if (e.AssociatedControl == Program.MainWindow.VividColorButton)
-            {
-                return (Image)Properties.Resources.Log_2_2;
-            }
-            else
-            {
-                return (Image)Properties.Resources.High_Contrast_2;
-            }
+                var img = SelectImage(ctrl);
+                var scaledImg = ScaleImage(img, 512, 512);
+                img.Dispose();
+                return scaledImg;
+            });
         }
 
-        private Image ScaleImage(Image image, int maxWidth, int maxHeight)
+        private static Image SelectImage(Control control)
+        {
+            var imageMap = new Dictionary<Control, Image>
+            {
+                { Program.MainWindow.DefaultColorButton, Properties.Resources.Default_2 },
+                { Program.MainWindow.NoirColorButton, Properties.Resources.Monochrome_2 },
+                { Program.MainWindow.MutedColorButton, Properties.Resources.Muted_2 },
+                { Program.MainWindow.LowContrastColorButton, Properties.Resources.Log_1_2 },
+                { Program.MainWindow.VividColorButton, Properties.Resources.Log_2_2 }
+            };
+
+            return imageMap.TryGetValue(control, out var image) ? image : Properties.Resources.High_Contrast_2;
+        }
+
+        private static Image ScaleImage(Image image, int maxWidth, int maxHeight)
         {
             var ratioX = (double)maxWidth / image.Width;
             var ratioY = (double)maxHeight / image.Height;
@@ -71,8 +69,8 @@
             using (var graphics = Graphics.FromImage(newImage))
             {
                 // Calculate x and y which center the image
-                int y = (maxHeight / 2) - (newHeight / 2);
-                int x = (maxWidth / 2) - (newWidth / 2);
+                int y = maxHeight / 2 - newHeight / 2;
+                int x = maxWidth / 2 - newWidth / 2;
 
                 // Draw image on x and y with newWidth and newHeight
                 graphics.DrawImage(image, x, y, newWidth, newHeight);

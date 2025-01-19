@@ -221,7 +221,7 @@
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new Size(717, 548);
             tabControl1.TabIndex = 0;
-            tabControl1.DrawItem += tabControl1_DrawItem;
+            tabControl1.DrawItem += TabControl1_DrawItem;
             // 
             // DisplayTab
             // 
@@ -286,7 +286,7 @@
             OptimizedPresetButton.Text = "OPTIMIZED";
             BasicToolTip.SetToolTip(OptimizedPresetButton, "Balanced and performant settings.");
             OptimizedPresetButton.UseVisualStyleBackColor = true;
-            OptimizedPresetButton.Click += button2_Click;
+            OptimizedPresetButton.Click += Button2_Click;
             // 
             // AdvancedDisplayGroupBox
             // 
@@ -331,7 +331,7 @@
             shadowcoveragebox.Size = new Size(152, 27);
             shadowcoveragebox.TabIndex = 56;
             BasicToolTip.SetToolTip(shadowcoveragebox, "Adjusts self-shadowing amount. Increase Shadow Quality before pushing this setting.");
-            shadowcoveragebox.SelectedIndexChanged += shadowcoveragebox_SelectedIndexChanged;
+            shadowcoveragebox.SelectedIndexChanged += Shadowcoveragebox_SelectedIndexChanged;
             // 
             // shadowcoveragelabel
             // 
@@ -377,7 +377,7 @@
             hbaopluscheckbox.Text = "Nvidia HBAO+";
             BasicToolTip.SetToolTip(hbaopluscheckbox, "High-end ambient occlusion solution for rendering realistic shadowing around objects.\r\n\r\nThe change will be applied instantly.");
             hbaopluscheckbox.UseVisualStyleBackColor = true;
-            hbaopluscheckbox.CheckedChanged += hbaopluscheckbox_CheckedChanged;
+            hbaopluscheckbox.CheckedChanged += Hbaopluscheckbox_CheckedChanged;
             // 
             // RunAsAdminButton
             // 
@@ -693,7 +693,7 @@
             smoothframebox.Text = "Smoothed Frame Rate";
             BasicToolTip.SetToolTip(smoothframebox, "May improve GPU utilisation above 60fps.");
             smoothframebox.UseVisualStyleBackColor = true;
-            smoothframebox.CheckedChanged += smoothframebox_CheckedChanged;
+            smoothframebox.CheckedChanged += Smoothframebox_CheckedChanged;
             // 
             // texpacksupportbox
             // 
@@ -706,7 +706,7 @@
             texpacksupportbox.Size = new Size(152, 27);
             texpacksupportbox.TabIndex = 18;
             BasicToolTip.SetToolTip(texpacksupportbox, resources.GetString("texpacksupportbox.ToolTip"));
-            texpacksupportbox.SelectedIndexChanged += texpacksupportbox_SelectedIndexChanged;
+            texpacksupportbox.SelectedIndexChanged += Texpacksupportbox_SelectedIndexChanged;
             // 
             // texpacklabel
             // 
@@ -1695,7 +1695,7 @@
             label1.TabIndex = 178;
             label1.Text = "*Speedrun settings! (click here to view guide)\r\n";
             BasicToolTip.SetToolTip(label1, "Maps speedrun key based on https://www.speedrun.com/arkhamasylum/guide/ng47r.\r\n'Mousewheel Up' or 'Mousewheel Down' is recommended for this setting.\r\n");
-            label1.MouseDown += label1_MouseDown;
+            label1.MouseDown += Label1_MouseDown;
             // 
             // DebugMenuButton
             // 
@@ -2089,7 +2089,7 @@
             linkLabel1.TabStop = true;
             linkLabel1.Text = "EVERGREEN";
             linkLabel1.TextAlign = ContentAlignment.MiddleCenter;
-            linkLabel1.LinkClicked += linkLabel1_LinkClicked;
+            linkLabel1.LinkClicked += LinkLabel1_LinkClicked;
             // 
             // PayPalLabel
             // 

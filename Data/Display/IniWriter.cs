@@ -2,7 +2,7 @@
 using NLog;
 using System.Text.RegularExpressions;
 
-namespace AsylumLauncher
+namespace AsylumLauncher.Data.Display
 {
     internal class IniWriter
     {
@@ -13,7 +13,7 @@ namespace AsylumLauncher
         readonly FileIniDataParser DataParser;
         readonly string[] ExcludedEntries = { "LightComplexityColors", "ShaderComplexityColors" };
 
-        private static Logger Nlog = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Nlog = LogManager.GetCurrentClassLogger();
 
 
         public IniWriter()
@@ -63,10 +63,10 @@ namespace AsylumLauncher
             {
                 if (BmEngineNew[i].Contains('='))
                 {
-                    var LineTrimmed = BmEngineNew[i].Substring(0, BmEngineNew[i].IndexOf('='));
+                    var LineTrimmed = BmEngineNew[i][..BmEngineNew[i].IndexOf('=')];
                     for (int j = 0; j < BmEngineOrig.Length; j++)
                     {
-                        if (BmEngineOrig[j].Contains('=') && BmEngineOrig[j].Substring(0, BmEngineOrig[j].IndexOf('=')) == LineTrimmed)
+                        if (BmEngineOrig[j].Contains('=') && BmEngineOrig[j][..BmEngineOrig[j].IndexOf('=')] == LineTrimmed)
                         {
                             if (LineTrimmed == ExcludedEntries[0] || LineTrimmed == ExcludedEntries[1])
                             {
@@ -94,19 +94,17 @@ namespace AsylumLauncher
             if (UserEngineLangValue != "Undefined")
             {
                 string[] UserEngine = File.ReadAllLines(UserEnginePath);
-                using (StreamWriter UserEngineFile = new(UserEnginePath))
+                using StreamWriter UserEngineFile = new(UserEnginePath);
+                foreach (string Line in UserEngine)
                 {
-                    foreach (string Line in UserEngine)
+                    if (Line.Contains("Language"))
                     {
-                        if (Line.Contains("Language"))
-                        {
-                            UserEngineFile.WriteLine(UserEngineLangValue);
-                            continue;
-                        }
-                        UserEngineFile.WriteLine(Line);
+                        UserEngineFile.WriteLine(UserEngineLangValue);
+                        continue;
                     }
-                    UserEngineFile.Close();
+                    UserEngineFile.WriteLine(Line);
                 }
+                UserEngineFile.Close();
             }
         }
 
@@ -119,8 +117,8 @@ namespace AsylumLauncher
         private void WriteBmEngineBasic()
         {
             // Resolution
-            var ResX = Program.MainWindow.ResolutionBox.SelectedItem.ToString().Substring(0, Program.MainWindow.ResolutionBox.SelectedItem.ToString().LastIndexOf("x"));
-            var ResY = Program.MainWindow.ResolutionBox.SelectedItem.ToString().Substring(Program.MainWindow.ResolutionBox.SelectedItem.ToString().LastIndexOf("x") + 1);
+            var ResX = Program.MainWindow.ResolutionBox.SelectedItem.ToString()[..Program.MainWindow.ResolutionBox.SelectedItem.ToString().LastIndexOf("x")];
+            var ResY = Program.MainWindow.ResolutionBox.SelectedItem.ToString()[(Program.MainWindow.ResolutionBox.SelectedItem.ToString().LastIndexOf("x") + 1)..];
             IniHandler.BmEngineData["SystemSettings"]["ResX"] = ResX;
             IniHandler.BmEngineData["SystemSettings"]["ResY"] = ResY;
             Nlog.Info("WriteBmEngineBasic - Set Resolution to {0}x{1}", ResX, ResY);
@@ -222,24 +220,16 @@ namespace AsylumLauncher
             Nlog.Info("WriteBmEngineBasic - Set Language to {0}", UserEngineLangValue);
         }
 
-        private void WriteBmEngineAdvanced()
+        private static void WriteBmEngineAdvanced()
         {
             // Anti-Aliasing
-            switch (Program.MainWindow.AntiAliasingBox.SelectedIndex)
+            IniHandler.BmEngineData["SystemSettings"]["MaxMultisamples"] = Program.MainWindow.AntiAliasingBox.SelectedIndex switch
             {
-                case 1:
-                    IniHandler.BmEngineData["SystemSettings"]["MaxMultisamples"] = "2";
-                    break;
-                case 2:
-                    IniHandler.BmEngineData["SystemSettings"]["MaxMultisamples"] = "4";
-                    break;
-                case 3:
-                    IniHandler.BmEngineData["SystemSettings"]["MaxMultisamples"] = "10";
-                    break;
-                default:
-                    IniHandler.BmEngineData["SystemSettings"]["MaxMultisamples"] = "1";
-                    break;
-            }
+                1 => "2",
+                2 => "4",
+                3 => "10",
+                _ => "1",
+            };
             Nlog.Info("WriteBmEngineAdvanced - Set MaxMultisamples to {0}", IniHandler.BmEngineData["SystemSettings"]["MaxMultisamples"]);
 
             // Anisotropic Filtering
@@ -285,18 +275,12 @@ namespace AsylumLauncher
             Nlog.Info("WriteBmEngineAdvanced - Set MaxShadowResolution to {0} and ShadowFilterRadius to {1}", IniHandler.BmEngineData["SystemSettings"]["MaxShadowResolution"], IniHandler.BmEngineData["SystemSettings"]["ShadowFilterRadius"]);
 
             // Shadow Coverage
-            switch (Program.MainWindow.shadowcoveragebox.SelectedIndex)
+            IniHandler.BmEngineData["SystemSettings"]["ShadowDepthBias"] = Program.MainWindow.shadowcoveragebox.SelectedIndex switch
             {
-                case 1:
-                    IniHandler.BmEngineData["SystemSettings"]["ShadowDepthBias"] = "0.010000";
-                    break;
-                case 2:
-                    IniHandler.BmEngineData["SystemSettings"]["ShadowDepthBias"] = "0.008000";
-                    break;
-                default:
-                    IniHandler.BmEngineData["SystemSettings"]["ShadowDepthBias"] = "0.012000";
-                    break;
-            }
+                1 => "0.010000",
+                2 => "0.008000",
+                _ => "0.012000",
+            };
             Nlog.Info("WriteBmEngineAdvanced - Set ShadowDepthBias to {0}", IniHandler.BmEngineData["SystemSettings"]["ShadowDepthBias"]);
 
             // Depth of Field
@@ -397,50 +381,38 @@ namespace AsylumLauncher
             Nlog.Info("WriteBmEngineAdvanced - Set PhysX to {0}", IniHandler.BmEngineData["Engine.Engine"]["PhysXLevel"]);
 
             // Poolsize
-            switch (Program.MainWindow.PoolsizeBox.SelectedIndex)
+            IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = Program.MainWindow.PoolsizeBox.SelectedIndex switch
             {
-                case 1:
-                    IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = "1024";
-                    break;
-                case 2:
-                    IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = "2048";
-                    break;
-                case 3:
-                    IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = "3072";
-                    break;
-                case 4:
-                    IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = "4096";
-                    break;
-                case 5:
-                    IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = "0";
-                    break;
-                default:
-                    IniHandler.BmEngineData["TextureStreaming"]["PoolSize"] = "512";
-                    break;
-            }
+                1 => "1024",
+                2 => "2048",
+                3 => "3072",
+                4 => "4096",
+                5 => "0",
+                _ => "512",
+            };
             Nlog.Info("WriteBmEngineAdvanced - Set Poolsize to {0}. Set MemoryMargin to {1}", IniHandler.BmEngineData["TextureStreaming"]["PoolSize"], IniHandler.BmEngineData["TextureStreaming"]["MemoryMargin"]);
         }
 
-        private void WriteColors()
+        private static void WriteColors()
         {
             // Saturation
-            IniHandler.BmEngineData["Engine.Player"]["PP_DesaturationMultiplier"] = Program.IniHandler.ColorLauncherToIni(Program.MainWindow.SaturationTrackbar.Value);
+            IniHandler.BmEngineData["Engine.Player"]["PP_DesaturationMultiplier"] = IniHandler.ColorLauncherToIni(Program.MainWindow.SaturationTrackbar.Value);
             Nlog.Info("WriteColors - Set Saturation to {0}", IniHandler.BmEngineData["Engine.Player"]["PP_DesaturationMultiplier"]);
 
             // Highlights
-            IniHandler.BmEngineData["Engine.Player"]["PP_HighlightsMultiplier"] = Program.IniHandler.ColorLauncherToIni(Program.MainWindow.HighlightsTrackbar.Value);
+            IniHandler.BmEngineData["Engine.Player"]["PP_HighlightsMultiplier"] = IniHandler.ColorLauncherToIni(Program.MainWindow.HighlightsTrackbar.Value);
             Nlog.Info("WriteColors - Set Highlights to {0}", IniHandler.BmEngineData["Engine.Player"]["PP_HighlightsMultiplier"]);
 
             // Midtones
-            IniHandler.BmEngineData["Engine.Player"]["PP_MidTonesMultiplier"] = Program.IniHandler.ColorLauncherToIni(Program.MainWindow.MidtonesTrackbar.Value);
+            IniHandler.BmEngineData["Engine.Player"]["PP_MidTonesMultiplier"] = IniHandler.ColorLauncherToIni(Program.MainWindow.MidtonesTrackbar.Value);
             Nlog.Info("WriteColors - Set Midtones to {0}", IniHandler.BmEngineData["Engine.Player"]["PP_MidTonesMultiplier"]);
 
             // Shadows
-            IniHandler.BmEngineData["Engine.Player"]["PP_ShadowsMultiplier"] = Program.IniHandler.ColorLauncherToIni(Program.MainWindow.ShadowsTrackbar.Value);
+            IniHandler.BmEngineData["Engine.Player"]["PP_ShadowsMultiplier"] = IniHandler.ColorLauncherToIni(Program.MainWindow.ShadowsTrackbar.Value);
             Nlog.Info("WriteColors - Set Shadows to {0}", IniHandler.BmEngineData["Engine.Player"]["PP_ShadowsMultiplier"]);
         }
 
-        private void WriteTextureGroupLines()
+        private static void WriteTextureGroupLines()
         {
             if (Program.MainWindow.texpacksupportbox.SelectedIndex == 3)
             {
@@ -564,7 +536,7 @@ namespace AsylumLauncher
             }
         }
 
-        private string ConcatTexString(string TexLine, string NewValue)
+        private static string ConcatTexString(string TexLine, string NewValue)
         {
             string CleanedNewValue = Regex.Replace(NewValue, @"\s", string.Empty);
             string Result = TexLine.Replace("MaxLODSize=4096", CleanedNewValue);

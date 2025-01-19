@@ -1,3 +1,5 @@
+using AsylumLauncher.Data.Controls;
+using AsylumLauncher.Data.Display;
 using AsylumLauncher.Properties;
 using NLog;
 using System.ComponentModel;
@@ -13,7 +15,7 @@ namespace AsylumLauncher
         private bool ControlSetting = false;
         public bool FirstStart = false;
         private bool LangFirstStart = false;
-        private ImageTooltip ImgToolTip;
+        private readonly ImageTooltip ImgToolTip;
         public bool DisplaySettingChanged
         {
             get => DisplaySetting;
@@ -39,11 +41,13 @@ namespace AsylumLauncher
         {
             InitializeComponent();
             InitAdminPerms();
-            ImgToolTip = new();
-            ImgToolTip.InitialDelay = 50;
-            ImgToolTip.AutoPopDelay = 5000000;
-            ImgToolTip.AutomaticDelay = 500;
-            ImgToolTip.ReshowDelay = 20;
+            ImgToolTip = new()
+            {
+                InitialDelay = 50,
+                AutoPopDelay = 5000000,
+                AutomaticDelay = 500,
+                ReshowDelay = 20
+            };
             ImgToolTip.SetToolTip(DefaultColorButton, "Default");
             ImgToolTip.SetToolTip(NoirColorButton, "Monochrome");
             ImgToolTip.SetToolTip(MutedColorButton, "Muted");
@@ -247,7 +251,7 @@ namespace AsylumLauncher
 
         private void ResetDisplayButton_Click(object sender, EventArgs e)
         {
-            Program.IniHandler.ResetDisplay();
+            IniHandler.ResetDisplay();
         }
 
         private void CapeStunButton_Click(object sender, EventArgs e)
@@ -262,41 +266,39 @@ namespace AsylumLauncher
 
         private void StartGameButton_Click(object sender, EventArgs e)
         {
-            using (Process LaunchGame = new())
+            using Process LaunchGame = new();
+            try
             {
-                try
+                if (FileHandler.DetectGameExe())
                 {
-                    if (FileHandler.DetectGameExe())
+                    this.StartGameButton.BackgroundImage = (Image)Resources.Phase3;
+                    this.ActiveControl = null;
+                    if (ApplySettingsButton.Enabled)
                     {
-                        this.StartGameButton.BackgroundImage = (Image)Resources.Phase3;
-                        this.ActiveControl = null;
-                        if (ApplySettingsButton.Enabled)
-                        {
-                            ApplySettingsButton_Click();
-                        }
-                        LaunchGame.StartInfo.FileName = "ShippingPC-BmGame.exe";
-                        LaunchGame.StartInfo.CreateNoWindow = true;
-                        LaunchGame.Start();
-                        PlayRandomStartupSound();
-                        Nlog.Info("StartGameButton_Click - Launching the game. Concluding logs at {0} on {1}.", DateTime.Now.ToString("HH:mm:ss"), DateTime.Now.ToString("D", new CultureInfo("en-GB")));
-                        Application.Exit();
+                        ApplySettingsButton_Click();
                     }
-                    else
-                    {
-                        MessageBox.Show("Could not find 'ShippingPC-BmGame.exe'.\nIs the Launcher in the correct folder?", "Error!", MessageBoxButtons.OK);
-                    }
+                    LaunchGame.StartInfo.FileName = "ShippingPC-BmGame.exe";
+                    LaunchGame.StartInfo.CreateNoWindow = true;
+                    LaunchGame.Start();
+                    PlayRandomStartupSound();
+                    Nlog.Info("StartGameButton_Click - Launching the game. Concluding logs at {0} on {1}.", DateTime.Now.ToString("HH:mm:ss"), DateTime.Now.ToString("D", new CultureInfo("en-GB")));
+                    Application.Exit();
                 }
-                catch (Win32Exception ex)
+                else
                 {
-                    Nlog.Error("StartGameButton_Click - \"ShippingPC-BmGame.exe\" does not appear to be a working Windows executable file: {0}", ex);
-                    MessageBox.Show("'ShippingPC-BmGame.exe' does not appear to be a working Windows executable file!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Could not find 'ShippingPC-BmGame.exe'.\nIs the Launcher in the correct folder?", "Error!", MessageBoxButtons.OK);
                 }
+            }
+            catch (Win32Exception ex)
+            {
+                Nlog.Error("StartGameButton_Click - \"ShippingPC-BmGame.exe\" does not appear to be a working Windows executable file: {0}", ex);
+                MessageBox.Show("'ShippingPC-BmGame.exe' does not appear to be a working Windows executable file!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void PlayRandomStartupSound()
+        private static void PlayRandomStartupSound()
         {
-            Random rnd = new Random();
+            Random rnd = new();
 
             int SoundPicker = rnd.Next(0, 4);
 
@@ -496,7 +498,7 @@ namespace AsylumLauncher
             DisplaySettingChanged = true;
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void Button2_Click(object sender, EventArgs e)
         {
             PresetHandler.SetOptimized();
             DisplaySettingChanged = true;
@@ -513,7 +515,7 @@ namespace AsylumLauncher
             new InputForm(DebugMenuButton).ShowDialog();
         }
 
-        private void tabControl1_DrawItem(object sender, DrawItemEventArgs e)
+        private void TabControl1_DrawItem(object sender, DrawItemEventArgs e)
         {
             if (e.Index == tabControl1.SelectedIndex)
             {
@@ -579,7 +581,7 @@ namespace AsylumLauncher
             new InputForm(CTDownButton1).ShowDialog();
         }
 
-        private void label1_MouseDown(object sender, MouseEventArgs e)
+        private void Label1_MouseDown(object sender, MouseEventArgs e)
         {
             Process.Start(new ProcessStartInfo { FileName = @"https://web.archive.org/web/20230310012657/https://www.speedrun.com/arkhamasylum/guide/ng47r", UseShellExecute = true });
         }
@@ -613,7 +615,7 @@ namespace AsylumLauncher
             Program.FileHandler.StartAsAdmin(Process.GetCurrentProcess().ProcessName + ".exe");
         }
 
-        private void hbaopluscheckbox_CheckedChanged(object sender, EventArgs e)
+        private void Hbaopluscheckbox_CheckedChanged(object sender, EventArgs e)
         {
             try
             {
@@ -622,7 +624,7 @@ namespace AsylumLauncher
             catch (NullReferenceException) { }
         }
 
-        private void texpacksupportbox_SelectedIndexChanged(object sender, EventArgs e)
+        private void Texpacksupportbox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if ((texpacksupportbox.SelectedIndex == 1 || texpacksupportbox.SelectedIndex == 2) && (PoolsizeBox.SelectedIndex == 0 || PoolsizeBox.SelectedIndex == 1) && FirstStart)
             {
@@ -647,12 +649,12 @@ namespace AsylumLauncher
             FirstStart = true;
         }
 
-        private void shadowcoveragebox_SelectedIndexChanged(object sender, EventArgs e)
+        private void Shadowcoveragebox_SelectedIndexChanged(object sender, EventArgs e)
         {
             DisplaySettingChanged = true;
         }
 
-        private void smoothframebox_CheckedChanged(object sender, EventArgs e)
+        private void Smoothframebox_CheckedChanged(object sender, EventArgs e)
         {
             DisplaySettingChanged = true;
         }
@@ -693,9 +695,9 @@ namespace AsylumLauncher
             DisplaySettingChanged = true;
         }
 
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LinkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Random number = new Random();
+            Random number = new();
 
             if ((number.NextDouble() * (100.0 - 1.0)) + 1.0 <= 7.0)
             {

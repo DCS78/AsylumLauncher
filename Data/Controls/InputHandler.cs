@@ -1,25 +1,24 @@
 ﻿using AsylumLauncher.Properties;
 using NLog;
+using System.Linq;
 
-namespace AsylumLauncher
+namespace AsylumLauncher.Data.Controls
 {
     internal class InputHandler
     {
-        public string UserInputFile;
+        public string UserInputFile { get; private set; }
 
-        public string BmInputFile;
+        public string BmInputFile { get; private set; }
 
-        public string[] LinesConfigStyle;
+        public string[] LinesConfigStyle { get; private set; }
 
-        public string[] LinesHumanReadable;
+        public string[] LinesHumanReadable { get; private set; }
 
-        private readonly string[] BannedKeys = { "OEM8", "OEM6", "OEM5", "LWIN", "RWIN", "OEM7", "SCROLL", "OEM1", "OEMTILDE", "OEM7", "NUMLOCK", "MULTIPLY",
-                                        "DIVIDE", "SUBTRACT", "ADD", "DECIMAL", "PAUSE", "CLEAR" };
+        private readonly string[] BannedKeys = { "OEM8", "OEM6", "OEM5", "LWIN", "RWIN", "OEM7", "SCROLL", "OEM1", "OEMTILDE", "OEM7", "NUMLOCK", "MULTIPLY", "DIVIDE", "SUBTRACT", "ADD", "DECIMAL", "PAUSE", "CLEAR" };
 
+        public List<Button> ButtonList { get; } = new();
 
-        public List<Button> ButtonList = new();
-
-        private static Logger Nlog = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Nlog = LogManager.GetCurrentClassLogger();
 
         public InputHandler()
         {
@@ -30,9 +29,9 @@ namespace AsylumLauncher
             Nlog.Info("Constructor - Successfully initialized InputHandler.");
         }
 
-        private string[] FillConfigStyle()
+        private static string[] FillConfigStyle()
         {
-            string[] style =
+            return new[]
             {
                 "LeftMouseButton",
                 "RightMouseButton",
@@ -85,12 +84,11 @@ namespace AsylumLauncher
                 "LeftShift",
                 "LeftAlt"
             };
-            return style;
         }
 
-        private string[] FillHumanReadable()
+        private static string[] FillHumanReadable()
         {
-            string[] style =
+            return new[]
             {
                 "Left Mouse",
                 "Right Mouse",
@@ -143,58 +141,34 @@ namespace AsylumLauncher
                 "Shift",
                 "Alt"
             };
-            return style;
         }
 
-        public void SetButton(Button Bt, string Text)
+        public void SetButton(Button bt, string text)
         {
-            string TxtName = Text;
-            if (TxtName.Contains("+"))
+            string txtName = text.Contains('+') ? text[(text.IndexOf("+") + 1)..].Trim() : text;
+
+            foreach (var keyButton in ButtonList.Where(kb => kb.Text == text || kb.Text.Equals(txtName, StringComparison.OrdinalIgnoreCase) || (kb.Text.Contains('+') && kb.Text[(kb.Text.IndexOf("+") + 1)..].Trim() == text)))
             {
-                TxtName = TxtName.Substring(TxtName.IndexOf("+") + 1);
-                TxtName = TxtName.Trim();
-            }
-            foreach (Button KeyButton in ButtonList)
-            {
-                string KeyButtonTrimmed = "";
-                if (KeyButton.Text.Contains("+"))
-                {
-                    KeyButtonTrimmed = KeyButton.Text.Substring(KeyButton.Text.IndexOf("+") + 1);
-                    KeyButtonTrimmed = KeyButtonTrimmed.Trim();
-                }
-                if (KeyButton.Text == Text || KeyButton.Text.Equals(TxtName) || KeyButtonTrimmed == Text)
-                {
-                    KeyButton.Text = "Unbound";
-                    KeyButton.ForeColor = Color.RoyalBlue;
-                }
+                keyButton.Text = "Unbound";
+                keyButton.ForeColor = Color.RoyalBlue;
             }
 
-            foreach (Button KeyButton in ButtonList)
+            var buttonToUpdate = ButtonList.FirstOrDefault(kb => kb.Name == bt.Name);
+            if (buttonToUpdate != null)
             {
-                if (Bt.Name == KeyButton.Name)
-                {
-                    KeyButton.Text = Text;
-                    KeyButton.ForeColor = Color.Black;
-                    break;
-                }
+                buttonToUpdate.Text = text;
+                buttonToUpdate.ForeColor = Color.Black;
             }
 
-            if (Bt.Text.Equals("Unbound"))
+            if (bt.Text.Equals("Unbound"))
             {
-                Bt.ForeColor = Color.RoyalBlue;
+                bt.ForeColor = Color.RoyalBlue;
             }
         }
 
         public bool KeyIsBanned(KeyEventArgs e)
         {
-            foreach (string Banned in BannedKeys)
-            {
-                if (e.KeyCode.ToString().ToLower() == Banned.ToLower())
-                {
-                    return true;
-                }
-            }
-            return false;
+            return BannedKeys.Any(banned => e.KeyCode.ToString().Equals(banned, StringComparison.OrdinalIgnoreCase));
         }
 
         public void ResetControls()
@@ -204,14 +178,14 @@ namespace AsylumLauncher
             File.Delete(BmInputFile);
             Program.FileHandler.CreateConfigFile(UserInputFile, Resources.UserInput);
             Program.FileHandler.CreateConfigFile(BmInputFile, Resources.BmInput);
-            foreach (Button KeyButton in ButtonList)
+            foreach (var keyButton in ButtonList)
             {
-                KeyButton.ForeColor = Color.Black;
+                keyButton.ForeColor = Color.Black;
             }
             Program.FileHandler.BmInput.IsReadOnly = true;
             new InputReader().InitControls();
             InputReader.InitBmInputLines();
-            Nlog.Info("ResetControls - Sucessfully reset control scheme.");
+            Nlog.Info("ResetControls - Successfully reset control scheme.");
         }
     }
 }

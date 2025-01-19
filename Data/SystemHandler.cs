@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Management;
 using System.Reflection;
 
-namespace AsylumLauncher
+namespace AsylumLauncher.Data
 {
     internal class SystemHandler
     {
@@ -12,7 +12,7 @@ namespace AsylumLauncher
         public string GPUData = "";
         public string CPUData = "";
 
-        private static Logger Nlog = LogManager.GetCurrentClassLogger();
+        private static readonly Logger Nlog = LogManager.GetCurrentClassLogger();
 
         public SystemHandler()
         {
@@ -21,23 +21,17 @@ namespace AsylumLauncher
             GPUData = InitializeGPUValues().ToUpper();
         }
 
-        private string InitializeCPU()
+        private static string InitializeCPU()
         {
             try
             {
-                var CPU = new ManagementObjectSearcher("select * from Win32_Processor").Get().Cast<ManagementObject>().First();
+                using var searcher = new ManagementObjectSearcher("select * from Win32_Processor");
+                var CPU = searcher.Get().Cast<ManagementObject>().FirstOrDefault() ?? throw new InvalidOperationException("No CPU information found.");
                 uint Clockspeed = (uint)CPU["MaxClockSpeed"];
-                double GHzSpeed = (double)Clockspeed / 1000;
-                Nlog.Info("InitializeCPU - Recognized CPU as {0} with a base clock speed of {1}GHz.", CPU["Name"].ToString().Trim(' '), Math.Round(GHzSpeed, 1));
-                var CPUName = CPU["Name"].ToString().Trim(' ');
-                if (CPUName.ToUpper().Contains("GHZ"))
-                {
-                    return CPUName;
-                }
-                else
-                {
-                    return CPUName + " @ " + Math.Round(GHzSpeed, 1) + "GHz";
-                }
+                double GHzSpeed = Clockspeed / 1000.0;
+                Nlog.Info("InitializeCPU - Recognized CPU as {0} with a base clock speed of {1}GHz.", CPU["Name"].ToString().Trim(), Math.Round(GHzSpeed, 1));
+                var CPUName = CPU["Name"].ToString().Trim();
+                return CPUName.ToUpper().Contains("GHZ") ? CPUName : $"{CPUName} @ {Math.Round(GHzSpeed, 1)}GHz";
             }
             catch (Exception e)
             {
@@ -51,56 +45,67 @@ namespace AsylumLauncher
         {
             try
             {
-                RegDirectory = Path.Combine(Registry.LocalMachine.ToString(), "SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000");
-                var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000");
-
-                if (key == null)
-                {
-                    RegDirectory = Path.Combine(Registry.LocalMachine.ToString(), "SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0001");
-                }
-
-                var VRam = ConvertVRamValue((object)Registry.GetValue(RegDirectory, "HardwareInformation.qwMemorySize", 0));
-                if (VRam.Trim() == "")
+                RegDirectory = GetRegistryDirectory();
+                var vRamValue = Registry.GetValue(RegDirectory, "HardwareInformation.qwMemorySize", null);
+                var VRam = ConvertVRamValue(vRamValue ?? 0);
+                if (string.IsNullOrWhiteSpace(VRam))
                 {
                     return SetGPUNameVideoController();
                 }
-                Nlog.Info("InitializeGPUValues - Recognized GPU as {0} with a total VRAM amount of {1}.", (string)Registry.GetValue(RegDirectory, "DriverDesc", "Could not find GPU name."), ConvertVRamValue((object)Registry.GetValue(RegDirectory, "HardwareInformation.qwMemorySize", 0)));
-                return (string)Registry.GetValue(RegDirectory, "DriverDesc", "GPU not found.") + " " + ConvertVRamValue((object)Registry.GetValue(RegDirectory, "HardwareInformation.qwMemorySize", 0));
+                var gpuName = (string?)Registry.GetValue(RegDirectory, "DriverDesc", "Could not find GPU name.") ?? "Unknown GPU";
+                Nlog.Info("InitializeGPUValues - Recognized GPU as {0} with a total VRAM amount of {1}.", gpuName, VRam);
+                return $"{gpuName} {VRam}";
             }
             catch (Exception e)
             {
                 Nlog.Error("InitializeGPUValues - Could not read Graphics Card information. Error: {0}", e);
                 Program.MainWindow.BasicToolTip.SetToolTip(Program.MainWindow.GPULabel, "Current version.");
-                return "Application Version: " + Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                return "Application Version: " + (Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown Version");
             }
         }
 
-        private string SetGPUNameVideoController()
+        private static string GetRegistryDirectory()
+        {
+            var key = Registry.LocalMachine.OpenSubKey(@"SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000");
+            if (key == null)
+            {
+                return Path.Combine(Registry.LocalMachine.ToString(), "SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0001");
+            }
+            return Path.Combine(Registry.LocalMachine.ToString(), "SYSTEM\\ControlSet001\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000");
+        }
+
+        private static string SetGPUNameVideoController()
         {
             List<string> GPUList = new();
-            ManagementObjectSearcher search = new("SELECT * FROM Win32_VideoController");
+            using var search = new ManagementObjectSearcher("SELECT * FROM Win32_VideoController");
             foreach (ManagementBaseObject o in search.Get())
             {
-                ManagementObject obj = (ManagementObject)o;
+                using var obj = (ManagementObject)o;
                 foreach (PropertyData data in obj.Properties)
                 {
-                    if (data.Name == "Description")
+                    if (data.Name == "Description" && data.Value != null)
                     {
                         GPUList.Add(data.Value.ToString());
                     }
                 }
             }
+
+            if (GPUList.Count == 0)
+            {
+                Nlog.Warn("SetGPUNameVideoController - No GPU descriptions found.");
+                return "Unknown GPU";
+            }
+
             var GPU = GPUList[0];
             if (GPUList.Count > 1)
             {
                 foreach (string s in GPUList)
                 {
-                    if (!s.Contains("NVIDIA") || !s.Contains("AMD"))
+                    if (s.Contains("NVIDIA") || s.Contains("AMD"))
                     {
-                        continue;
+                        GPU = s;
+                        break;
                     }
-                    GPU = s;
-                    break;
                 }
             }
             Nlog.Warn("SetGPUNameVideoController - Used fallback method to determine GPU as {0}. Could not correctly determine VRAM amount. Your GPU drivers may be corrupted.", GPU);
@@ -108,11 +113,11 @@ namespace AsylumLauncher
         }
 
         ///<Returns VRAM value in GB in most cases.</Returns>.</summary>
-        private string ConvertVRamValue(object VRam)
+        private static string ConvertVRamValue(object VRam)
         {
             try
             {
-                Int64 VRamValue = (Int64)VRam;
+                long VRamValue = Convert.ToInt64(VRam);
 
                 var Affix = "MB";
                 if (VRamValue >= 1073741824)
@@ -121,7 +126,7 @@ namespace AsylumLauncher
                     Affix = "GB";
                 }
                 VRamValue /= 1048576;
-                return "(" + VRamValue.ToString() + Affix + ")";
+                return $"({VRamValue}{Affix})";
             }
             catch (InvalidCastException)
             {

@@ -1,3 +1,6 @@
+using AsylumLauncher.Data;
+using AsylumLauncher.Data.Controls;
+using AsylumLauncher.Data.Display;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
@@ -45,49 +48,32 @@ namespace AsylumLauncher
         [STAThread]
         static void Main(string[] args)
         {
-            bool IsNewWindow = true;
-            using (Mutex mtx = new(true, "{7F85C5E9-214F-4F2A-A949-AA3978D5DAC2}", out IsNewWindow))
+            using Mutex mtx = new(true, "{7F85C5E9-214F-4F2A-A949-AA3978D5DAC2}", out _);
+            if (args.Contains("-nologs"))
             {
-                if (args.Contains("-nologs"))
-                {
-                    CreateLogs = false;
-                }
-                if (args.Contains("-nolauncher"))
-                {
-                    SetupCulture();
-                    SetupLogger(CreateLogs);
-                    LauncherBypass();
-                }
-                else if (IsNewWindow)
-                {
-                    IsAdmin = CheckIsAdmin();
-                    SetupCulture();
-                    SetupLogger(CreateLogs);
-                    InitializeProgram();
-                    Application.Run(MainWindow);
-                }
-                else
-                {
-                    Process Current = Process.GetCurrentProcess();
-                    foreach (Process P in Process.GetProcessesByName(Current.ProcessName))
-                    {
-                        if (P.Id != Current.Id)
-                        {
-                            SetForegroundWindow(P.MainWindowHandle);
-                            break;
-                        }
-                    }
-                }
+                CreateLogs = false;
+            }
+            if (args.Contains("-nolauncher"))
+            {
+                SetupCulture();
+                SetupLogger(CreateLogs);
+                LauncherBypass();
+            }
+            else if (true)
+            {
+                IsAdmin = CheckIsAdmin();
+                SetupCulture();
+                SetupLogger(CreateLogs);
+                InitializeProgram();
+                Application.Run(MainWindow);
             }
         }
 
         private static bool CheckIsAdmin()
         {
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
-            {
-                var principal = new WindowsPrincipal(identity);
-                return principal?.IsInRole(WindowsBuiltInRole.Administrator) ?? false;
-            }
+            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal?.IsInRole(WindowsBuiltInRole.Administrator) ?? false;
         }
 
         private static void SetupCulture()
@@ -107,9 +93,9 @@ namespace AsylumLauncher
             FileHandler = new FileHandler();
             IniHandler = new IniHandler();
             InputHandler = new InputHandler();
-            var SystemHandler = new SystemHandler();
-            MainWindow.GPULabel.Text = SystemHandler.GPUData;
-            MainWindow.CPULabel.Text = SystemHandler.CPUData;
+            SystemHandler systemHandler = new();
+            MainWindow.GPULabel.Text = systemHandler.GPUData;
+            MainWindow.CPULabel.Text = systemHandler.CPUData;
             new IniReader().InitDisplay();
             new InputReader().InitControls();
             new InputWriter().WriteBmInput();
@@ -174,38 +160,34 @@ namespace AsylumLauncher
 
         private static bool IsFontInstalled(string FontFamily)
         {
-            using (Font f = new Font(FontFamily, 10f, FontStyle.Regular))
-            {
-                StringComparison comparison = StringComparison.InvariantCultureIgnoreCase;
-                return string.Compare(FontFamily, f.Name, comparison) == 0;
-            }
+            using Font f = new(FontFamily, 10f, FontStyle.Regular);
+            StringComparison comparison = StringComparison.InvariantCultureIgnoreCase;
+            return string.Compare(FontFamily, f.Name, comparison) == 0;
         }
 
         private static void LauncherBypass()
         {
             Nlog.Info("LauncherBypass - Starting logs at {0} on {1}.", DateTime.Now.ToString("HH:mm:ss"), DateTime.Now.ToString("D", new CultureInfo("en-GB")));
-            using (Process LaunchGame = new())
+            using Process LaunchGame = new();
+            try
             {
-                try
+                if (FileHandler.DetectGameExe())
                 {
-                    if (FileHandler.DetectGameExe())
-                    {
-                        LaunchGame.StartInfo.FileName = "ShippingPC-BmGame.exe";
-                        LaunchGame.StartInfo.CreateNoWindow = true;
-                        LaunchGame.Start();
-                        Nlog.Info("LauncherBypass - Launching the game. Concluding logs at {0} on {1}.", DateTime.Now.ToString("HH:mm:ss"), DateTime.Now.ToString("D", new CultureInfo("en-GB")));
-                        Application.Exit();
-                    }
-                    else
-                    {
-                        MessageBox.Show("Could not find 'ShippingPC-BmGame.exe'.\nIs the Launcher in the correct folder?", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    LaunchGame.StartInfo.FileName = "ShippingPC-BmGame.exe";
+                    LaunchGame.StartInfo.CreateNoWindow = true;
+                    LaunchGame.Start();
+                    Nlog.Info("LauncherBypass - Launching the game. Concluding logs at {0} on {1}.", DateTime.Now.ToString("HH:mm:ss"), DateTime.Now.ToString("D", new CultureInfo("en-GB")));
+                    Application.Exit();
                 }
-                catch (Win32Exception e)
+                else
                 {
-                    Nlog.Error("LauncherBypass - \"ShippingPC-BmGame.exe\" does not appear to be a Windows executable file: {0}", e);
-                    MessageBox.Show("'ShippingPC-BmGame.exe' does not appear to be a Windows executable file!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Could not find 'ShippingPC-BmGame.exe'.\nIs the Launcher in the correct folder?", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+            catch (Win32Exception e)
+            {
+                Nlog.Error("LauncherBypass - \"ShippingPC-BmGame.exe\" does not appear to be a Windows executable file: {0}", e);
+                MessageBox.Show("'ShippingPC-BmGame.exe' does not appear to be a Windows executable file!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
